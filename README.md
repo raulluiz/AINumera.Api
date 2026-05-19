@@ -45,6 +45,16 @@ A API ficará disponível em:
 http://localhost:5078
 ```
 
+## Swagger
+
+Com a API rodando em ambiente de desenvolvimento, acesse:
+
+```text
+http://localhost:5078/swagger
+```
+
+No Visual Studio, o perfil do projeto já está configurado para abrir direto nessa tela.
+
 ## Endpoints disponíveis
 
 Buscar opções dos filtros:
@@ -71,3 +81,6 @@ GET http://localhost:5078/api/dashboard?clientId=client-acme&companyId=company-n
 ## Observação sobre banco de dados
 
 Atualmente a API usa `MockUsageRepository` com dados em memória.
+## Dominios modelados
+
+- `ControleTributo`: entidade que representa a futura tabela MySQL `controletributos`.

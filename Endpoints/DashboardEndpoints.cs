@@ -19,7 +19,9 @@ public static class DashboardEndpoints
         {
             var filters = await repository.GetFiltersAsync();
             return Results.Ok(filters);
-        });
+        })
+        .WithName("GetDashboardFilters")
+        .WithTags("Dashboard");
 
         group.MapGet("", async (
             string? clientId,
@@ -32,7 +34,9 @@ public static class DashboardEndpoints
             var dashboard = await service.GetDashboardAsync(query);
 
             return Results.Ok(dashboard);
-        });
+        })
+        .WithName("GetDashboard")
+        .WithTags("Dashboard");
 
         return app;
     }
