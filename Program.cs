@@ -14,5 +14,6 @@ var app = builder.Build();
 app.UseSwaggerDocumentation();
 app.UseCors(CorsPolicies.Frontend);
 app.MapDashboardEndpoints();
+app.MapControleTributosEndpoints();
 
 app.Run();

@@ -1,4 +1,5 @@
 using UsageDashboard.Api.Domain;
+using UsageDashboard.Api.Infrastructure.Database;
 using UsageDashboard.Api.Repositories;
 using UsageDashboard.Api.Services;
 
@@ -25,6 +26,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IUsageRepository, MockUsageRepository>();
         services.AddScoped<IEconomyCalculator, EconomyCalculator>();
         services.AddScoped<IDashboardService, DashboardService>();
+        services.AddScoped<IControleTributosDatabaseInitializer, MySqlControleTributosDatabaseInitializer>();
+        services.AddScoped<IControleTributoRepository, MySqlControleTributoRepository>();
+        services.AddScoped<IControleTributoImportService, ControleTributoImportService>();
 
         return services;
     }
