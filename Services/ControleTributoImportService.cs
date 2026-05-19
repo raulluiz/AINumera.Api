@@ -62,8 +62,8 @@ public sealed class ControleTributoImportService(
             totalLinesRead,
             records.Count,
             insertedRecords,
-            totalStopwatch.ElapsedMilliseconds,
-            databaseStopwatch.ElapsedMilliseconds,
+            totalStopwatch.Elapsed.TotalSeconds,
+            databaseStopwatch.Elapsed.TotalSeconds,
             importedLines);
     }
 

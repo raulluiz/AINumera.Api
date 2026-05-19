@@ -11,9 +11,7 @@ public static class ControleTributosEndpoints
         var group = app.MapGroup("/api/controle-tributos")
             .WithTags("ControleTributos");
 
-        group.MapPost("/setup-database", async (
-            IControleTributosDatabaseInitializer initializer,
-            CancellationToken cancellationToken) =>
+        group.MapPost("/setup-database", async (IControleTributosDatabaseInitializer initializer,CancellationToken cancellationToken) =>
         {
             await initializer.EnsureCreatedAsync(cancellationToken);
 
@@ -25,10 +23,7 @@ public static class ControleTributosEndpoints
         .WithName("SetupControleTributosDatabase")
         .Produces<DatabaseSetupResponse>();
 
-        group.MapPost("/upload-txt", async (
-            IFormFile file,
-            IControleTributoImportService importService,
-            CancellationToken cancellationToken) =>
+        group.MapPost("/upload-txt", async (IFormFile file,IControleTributoImportService importService,CancellationToken cancellationToken) =>
         {
             try
             {

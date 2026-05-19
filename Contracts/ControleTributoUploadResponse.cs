@@ -5,6 +5,6 @@ public sealed record ControleTributoUploadResponse(
     int TotalLinesRead,
     int ParsedRecords,
     int InsertedRecords,
-    long TotalElapsedMilliseconds,
-    long DatabaseElapsedMilliseconds,
+    double TotalSeconds,
+    double DatabaseSeconds,
     IReadOnlyList<ControleTributoImportedLineDto> Preview);
