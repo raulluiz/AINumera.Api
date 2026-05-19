@@ -14,22 +14,27 @@ public sealed class ControleTributoImportService(
 
     public async Task<ControleTributoUploadResponse> ImportAsync(IFormFile file, CancellationToken cancellationToken)
     {
+        await using var stream = file.OpenReadStream();
+        return await ImportAsync(stream, file.FileName, cancellationToken);
+    }
+
+    public async Task<ControleTributoUploadResponse> ImportAsync(System.IO.Stream stream, string fileName, CancellationToken cancellationToken)
+    {
         var totalStopwatch = Stopwatch.StartNew();
         var databaseStopwatch = new Stopwatch();
 
-        ValidateFile(file);
-
+        // Ensure database exists before processing large file
         databaseStopwatch.Start();
         await databaseInitializer.EnsureCreatedAsync(cancellationToken);
         databaseStopwatch.Stop();
 
         var importedLines = new List<ControleTributoImportedLineDto>();
-        var records = new List<ControleTributo>();
+        var batch = new List<ControleTributo>();
         var totalLinesRead = 0;
+        var totalInserted = 0;
+        const int BatchSize = 10000;
 
-        await using var stream = file.OpenReadStream();
         using var reader = new StreamReader(stream);
-
         while (await reader.ReadLineAsync(cancellationToken) is { } line)
         {
             totalLinesRead++;
@@ -40,7 +45,7 @@ public sealed class ControleTributoImportService(
             }
 
             var parsedLine = PipeTextLine.Parse(line, totalLinesRead);
-            records.Add(ToControleTributo(parsedLine));
+            batch.Add(ToControleTributo(parsedLine));
 
             if (importedLines.Count < PreviewLimit)
             {
@@ -50,18 +55,33 @@ public sealed class ControleTributoImportService(
                     parsedLine.ColumnCount,
                     parsedLine.OriginalLine));
             }
+
+            if (batch.Count >= BatchSize)
+            {
+                databaseStopwatch.Start();
+                var inserted = await repository.InsertManyAsync(batch, cancellationToken);
+                databaseStopwatch.Stop();
+                totalInserted += inserted;
+                batch.Clear();
+            }
         }
 
-        databaseStopwatch.Start();
-        var insertedRecords = await repository.InsertManyAsync(records, cancellationToken);
-        databaseStopwatch.Stop();
+        if (batch.Count > 0)
+        {
+            databaseStopwatch.Start();
+            var inserted = await repository.InsertManyAsync(batch, cancellationToken);
+            databaseStopwatch.Stop();
+            totalInserted += inserted;
+            batch.Clear();
+        }
+
         totalStopwatch.Stop();
 
         return new ControleTributoUploadResponse(
-            file.FileName,
+            fileName,
             totalLinesRead,
-            records.Count,
-            insertedRecords,
+            totalLinesRead, 
+            totalInserted,
             totalStopwatch.Elapsed.TotalSeconds,
             databaseStopwatch.Elapsed.TotalSeconds,
             importedLines);

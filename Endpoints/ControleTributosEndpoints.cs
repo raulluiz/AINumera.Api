@@ -1,3 +1,6 @@
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Net.Http.Headers;
 using UsageDashboard.Api.Contracts;
 using UsageDashboard.Api.Infrastructure.Database;
 using UsageDashboard.Api.Services;
@@ -23,12 +26,33 @@ public static class ControleTributosEndpoints
         .WithName("SetupControleTributosDatabase")
         .Produces<DatabaseSetupResponse>();
 
-        group.MapPost("/upload-txt", async (IFormFile file,IControleTributoImportService importService,CancellationToken cancellationToken) =>
+        group.MapPost("/upload-txt", async (HttpRequest request, IControleTributoImportService importService, CancellationToken cancellationToken) =>
         {
+            if (!request.HasFormContentType)
+            {
+                return Results.BadRequest(new { message = "Conteúdo inválido" });
+            }
+
             try
             {
-                var result = await importService.ImportAsync(file, cancellationToken);
-                return Results.Ok(result);
+                var boundary = HeaderUtilities.RemoveQuotes(MediaTypeHeaderValue.Parse(request.ContentType).Boundary).Value;
+                var reader = new MultipartReader(boundary, request.Body);
+                var section = await reader.ReadNextSectionAsync(cancellationToken);
+
+                while (section != null)
+                {
+                    var hasContentDispositionHeader = ContentDispositionHeaderValue.TryParse(section.ContentDisposition, out var contentDisposition);
+                    if (hasContentDispositionHeader && contentDisposition != null && contentDisposition.DispositionType.Equals("form-data") && !string.IsNullOrEmpty(contentDisposition.FileName.Value))
+                    {
+                        var fileName = contentDisposition.FileName.Value ?? contentDisposition.FileNameStar.Value ?? "uploaded.txt";
+                        var result = await importService.ImportAsync(section.Body, fileName, cancellationToken);
+                        return Results.Ok(result);
+                    }
+
+                    section = await reader.ReadNextSectionAsync(cancellationToken);
+                }
+
+                return Results.BadRequest(new { message = "Nenhuma linha encontrada no arquivo" });
             }
             catch (InvalidDataException exception)
             {
@@ -36,7 +60,6 @@ public static class ControleTributosEndpoints
             }
         })
         .WithName("UploadControleTributosTxt")
-        .Accepts<IFormFile>("multipart/form-data")
         .Produces<ControleTributoUploadResponse>()
         .DisableAntiforgery();
 
