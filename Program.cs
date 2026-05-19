@@ -3,6 +3,8 @@ using UsageDashboard.Api.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.WebHost.UseUrls("http://localhost:5078");
+
 builder.Services.AddFrontendCors();
 builder.Services.AddDashboardServices();
 
